@@ -1,8 +1,10 @@
 package com.devapi.model.entities;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -17,17 +19,16 @@ import java.util.UUID;
 public class Topic {
 
     @Id
-    @Column(columnDefinition = "BINARY(16)",name = "id")
     @GeneratedValue(strategy = GenerationType.UUID)
     @NonNull
+    @JsonProperty("id")
     private UUID id;
 
-    @Column(nullable = false, length = 100)
+    @Column(name = "topic_name",nullable = false, length = 100)
     @NonNull
     private String name;
 
     @Column(name = "no_of_users", nullable = false)
-    @NonNull
     private int numberOfUsers;
 
     @Column(name = "no_of_subtopics", nullable = false)
@@ -50,6 +51,8 @@ public class Topic {
     List<SubTopic> subTopicsList;
 
     public void addSubTopic(SubTopic subTopic){
+        if(null==subTopicsList)
+            subTopicsList = new ArrayList<>();
         this.subTopicsList.add(subTopic);
     }
 }

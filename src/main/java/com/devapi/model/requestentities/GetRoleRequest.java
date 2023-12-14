@@ -2,7 +2,6 @@ package com.devapi.model.requestentities;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NonNull;
 
 import java.util.UUID;
 

@@ -10,6 +10,7 @@ import com.devapi.model.requestentities.CreateUserRequest;
 import com.devapi.model.requestentities.DeleteUserRequest;
 import com.devapi.model.requestentities.GetUserRequest;
 import com.devapi.responseObjects.Response;
+import com.devapi.responseObjects.StandardRoleResponse;
 import com.devapi.responseObjects.StandardUserResponse;
 import com.devapi.services.UserService;
 import lombok.NonNull;
@@ -18,12 +19,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")
 public class UserController {
+    private static final String DEFAULT_ROLE = "GUEST";
     UserService userService;
 
     @Autowired
@@ -34,7 +38,7 @@ public class UserController {
         this.userService = userService;
     }
 
-    @GetMapping("/user/getUser")
+    @PostMapping("/get_user")
     public ResponseEntity<Response> getUser(@RequestBody @NonNull GetUserRequest getUserRequest) throws Exception {
         User user;
         if (null != getUserRequest.getId()) {
@@ -46,8 +50,8 @@ public class UserController {
                     "Necessary Fields not found", HttpStatus.BAD_REQUEST), HttpStatus.BAD_REQUEST);
         }
         if (null != user) {
-            return new ResponseEntity<>(new StandardUserResponse("success", HttpStatus.OK.value(),
-                    System.currentTimeMillis(), user), HttpStatus.OK);
+            user.setPassword("");
+            return new ResponseEntity<>(new StandardUserResponse("success", HttpStatus.OK.value(), user), HttpStatus.OK);
         } else {
             return new ResponseEntity<>(new UserExceptionResponse(UserException.USER_NOT_FOUND,
                     HttpStatus.NOT_FOUND), HttpStatus.OK);
@@ -56,25 +60,27 @@ public class UserController {
     }
 
     @PostMapping("/user")
-    public ResponseEntity<Response> saveUser(@RequestBody CreateUserRequest createUserRequest) throws IllegalAccessException {
+    public ResponseEntity<Response> saveUser(@RequestBody @NonNull CreateUserRequest createUserRequest) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, InstantiationException {
+
         User user = userService.save(createUserRequest);
         user.setPassword("");
-        return new ResponseEntity<>(new StandardUserResponse("success", HttpStatus.OK.value(),
-                System.currentTimeMillis(), user), HttpStatus.OK);
+        List<Role> roles = ((StandardRoleResponse) Objects.requireNonNull(roleController.getRole(null, DEFAULT_ROLE).getBody())).getMainObjects();
+        user.addRoles(roles);
+        return new ResponseEntity<>(new StandardUserResponse("success", HttpStatus.OK.value(), user), HttpStatus.OK);
     }
 
     @GetMapping("/users")
     public ResponseEntity<Response> getUsers() {
         List<User> users = userService.findAll();
-        return new ResponseEntity<>(new StandardUserResponse("success", HttpStatus.OK.value(),
-                System.currentTimeMillis(), users), HttpStatus.OK);
+        users.forEach(user -> {user.setPassword("");});
+        return new ResponseEntity<>(new StandardUserResponse("success", HttpStatus.OK.value(), users), HttpStatus.OK);
     }
 
     @PutMapping("/user")
     public ResponseEntity<Response> updateUser(@RequestBody UserDTO userdto) throws Exception {
         User user = userService.updateUser(userdto.getEmail(), userdto);
-        return new ResponseEntity<>(new StandardUserResponse("success", HttpStatus.OK.value(),
-                System.currentTimeMillis(), user), HttpStatus.OK);
+        user.setPassword("");
+        return new ResponseEntity<>(new StandardUserResponse("success", HttpStatus.OK.value(), user), HttpStatus.OK);
     }
 
     @DeleteMapping("/user")
@@ -87,7 +93,7 @@ public class UserController {
         boolean deleted = userService.deleteById(user.getId());
         if (Boolean.TRUE.equals(deleted)) {
             return new ResponseEntity<>(new StandardUserResponse("success",
-                    HttpStatus.OK.value(), System.currentTimeMillis()), HttpStatus.OK);
+                    HttpStatus.OK.value()), HttpStatus.OK);
         }
         return new ResponseEntity<>(new UserExceptionResponse(UserException.USER_NOT_FOUND,
                 HttpStatus.NOT_FOUND), HttpStatus.NOT_FOUND);
@@ -96,17 +102,19 @@ public class UserController {
     @PostMapping("/user/assign-roles")
     public ResponseEntity<Response> assignRole(@RequestBody AssignRoleRequest assignRoleRequest) throws Exception {
         GetUserRequest getUserRequest = new GetUserRequest(assignRoleRequest.getUserId(), assignRoleRequest.getUserEmail());
-        ResponseEntity<Response> responseEntity = getUser(getUserRequest);
-        Response userResponse = responseEntity.getBody();
-        List<Role> roles = roleController.getRoles(assignRoleRequest.getAssignRoles());
-        if (roles.size() == 0)
-            return new ResponseEntity<>(new UserExceptionResponse("no Roles found with given name",
-                    HttpStatus.NOT_FOUND), HttpStatus.BAD_REQUEST);
+        ResponseEntity<Response> userResponseEntity = getUser(getUserRequest);
+        Response userResponse = userResponseEntity.getBody();
+        ResponseEntity<Response> roleResponseEntity  = roleController.getRoles(assignRoleRequest.getAssignRoles());
+        Response roleResponse = roleResponseEntity.getBody();
+        if (!(roleResponse instanceof StandardRoleResponse))
+            return roleResponseEntity;
         if (userResponse instanceof StandardUserResponse) {
             User user = ((StandardUserResponse) userResponse).getMainObject();
+            user.setPassword("");
+            List<Role> roles = ((StandardRoleResponse) roleResponse).getMainObjects();
             userService.addRolesToUser(user, roles);
         }
-        return responseEntity;
+        return userResponseEntity;
     }
 }
 

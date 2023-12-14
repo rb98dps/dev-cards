@@ -1,6 +1,5 @@
 package com.devapi.Exceptions;
 
-import com.devapi.responseObjects.Response;
 import org.springframework.http.HttpStatus;
 
 public enum UserException{

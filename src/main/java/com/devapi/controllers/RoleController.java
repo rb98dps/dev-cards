@@ -1,20 +1,19 @@
 package com.devapi.controllers;
 
+import com.devapi.Exceptions.RoleException;
+import com.devapi.Exceptions.RoleExceptionResponse;
 import com.devapi.dao.RoleRepository;
 import com.devapi.model.entities.Role;
 import com.devapi.model.requestentities.GetRoleRequest;
+import com.devapi.responseObjects.Response;
+import com.devapi.responseObjects.StandardRoleResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.rest.webmvc.RepositoryRestController;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RepositoryRestController(path = "/roles")
@@ -24,46 +23,49 @@ public class RoleController {
     private RoleRepository roleRepository;
 
     @GetMapping("/role")
-    @ResponseBody
-    public List<Role> getRole(@RequestBody GetRoleRequest getRoleRequest) {
-        if(null!=getRoleRequest.getRoleId()){
-            return roleRepository.findAllById(Collections.singletonList(getRoleRequest.getRoleId()));
+    public ResponseEntity<Response> getRole(@RequestParam("id") UUID roleId, @RequestParam("name") String roleName) {
+        List<Role> roles = null;
+        if (null != roleId) {
+            roles = roleRepository.findAllById(Collections.singletonList(roleId));
+        } else if (null != roleName) {
+            roles = roleRepository.findByRoleName(roleName);
+
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new RoleExceptionResponse("Required fields not found", HttpStatus.BAD_REQUEST));
         }
-        else{
-            return roleRepository.findByRoleName(getRoleRequest.getRoleName());
-        }
+        return new ResponseEntity<>(new StandardRoleResponse("success", HttpStatus.OK.value(), roles), HttpStatus.OK);
     }
 
-    @GetMapping("/rolesList")
-    @ResponseBody
-    public List<Role> getRoles(@RequestBody List<GetRoleRequest> getRoleRequests) {
+    @PostMapping("/rolesList")
+    public ResponseEntity<Response> getRoles(@RequestBody List<GetRoleRequest> getRoleRequests) {
         List<Role> roles = new ArrayList<>();
-        if(null!=getRoleRequests){
+        if (null != getRoleRequests) {
             roles.addAll(roleRepository.findAllById(getRoleRequests.stream().map(GetRoleRequest::getRoleId).distinct().collect(Collectors.toList())));
             roles.addAll(roleRepository.findAllByRoleIn(getRoleRequests.stream().map(GetRoleRequest::getRoleName).distinct().collect(Collectors.toList())));
             roles = removeDuplicates(roles);
         }
-        else{
-            throw new RuntimeException("No Role provided");
-        }
-        return roles;
+        return new ResponseEntity<>(new StandardRoleResponse("success", HttpStatus.OK.value(), roles), HttpStatus.OK);
     }
 
     @PostMapping("/role")
     @ResponseBody
-    public Role saveRole(@RequestBody Role role) throws Exception {
+    public ResponseEntity<Response> saveRole(@RequestBody Role role) {
         role.setRole(role.getRole().toUpperCase());
-        if(!roleRepository.existsByName(role.getRole())){
-            return roleRepository.save(role);
-        } else throw new Exception("Role already exists");
+        Role savedRole;
+        if (!roleRepository.existsByName(role.getRole())) {
+            savedRole = roleRepository.save(role);
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new RoleExceptionResponse(RoleException.ROLE_ALREADY_EXIST, HttpStatus.BAD_REQUEST));
+        }
+        return new ResponseEntity<>(new StandardRoleResponse("success", HttpStatus.OK.value(), savedRole), HttpStatus.OK);
     }
 
-    private  <T> List<T> removeDuplicates(List<T> list) {
+    private <T> List<T> removeDuplicates(List<T> list) {
         // Convert the list to a Set (which automatically removes duplicates)
         HashSet<T> set = new HashSet<>();
         List<T> list1 = new ArrayList<>();
-        for(T tuple: list){
-            if(!set.contains(tuple)){
+        for (T tuple : list) {
+            if (!set.contains(tuple)) {
                 set.add(tuple);
                 list1.add(tuple);
             }
