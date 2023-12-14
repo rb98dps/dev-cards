@@ -7,17 +7,23 @@ import com.devapi.model.entities.User;
 import com.devapi.model.requestentities.CreateUserRequest;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static com.devapi.util.DevApiUtilities.mapObjectToObject;
+
 @Component
 public class UserServiceImpl extends GenericServiceImpl<User, UUID> implements UserService {
 
+
+    PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Autowired
     public UserServiceImpl(Dao<User, UUID> dao) {
@@ -51,8 +57,7 @@ public class UserServiceImpl extends GenericServiceImpl<User, UUID> implements U
 
     @Override
     @Transactional
-    public User save(CreateUserRequest createUserRequest) throws IllegalAccessException {
-        //PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    public User save(CreateUserRequest createUserRequest) throws IllegalAccessException, NoSuchMethodException, InstantiationException, InvocationTargetException {
         // user.setPassword(passwordEncoder.encode(user.getPassword()));
         try {
             if (checkExistingUser(createUserRequest.getClass().getDeclaredField("email").getName(), createUserRequest.getEmail()))
@@ -60,8 +65,9 @@ public class UserServiceImpl extends GenericServiceImpl<User, UUID> implements U
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        User user = new User();
-        user = mapObjectToUser(createUserRequest, user);
+        createUserRequest.setPassword(passwordEncoder.encode(createUserRequest.getPassword()));
+        User user;
+        user = (User) mapObjectToObject(createUserRequest, User.class);
         user.setCreateTime(new Timestamp(System.currentTimeMillis()));
         user.setLastLoginDate(new Timestamp(System.currentTimeMillis()));
         System.out.println(user);
@@ -87,7 +93,7 @@ public class UserServiceImpl extends GenericServiceImpl<User, UUID> implements U
         switch (users) {
             case 0 -> throw new Exception("No user found with the email id");
             case 1 -> {
-                User user = mapObjectToUser(userDTO, userList.get(0));
+                User user = (User) mapObjectToObject(userDTO, userList.get(0));
                 return this.dao.save(user);
             }
             default -> throw new Exception("More than 1 user found with the mail id");
@@ -100,23 +106,5 @@ public class UserServiceImpl extends GenericServiceImpl<User, UUID> implements U
         user.addRoles(roles);
     }
 
-    public User mapObjectToUser(Object object, User user) throws IllegalAccessException {
-        Field[] fields = object.getClass().getDeclaredFields();
 
-        // For each field, set the value of the corresponding field in the item object
-        for (Field field : fields) {
-            field.setAccessible(true);
-            if (field.get(object) != null) {
-                Field itemField;
-                try {
-                    itemField = user.getClass().getDeclaredField(field.getName());
-                } catch (NoSuchFieldException e) {
-                    continue;
-                }
-                itemField.setAccessible(true);
-                itemField.set(user, field.get(object));
-            }
-        }
-        return user;
-    }
 }

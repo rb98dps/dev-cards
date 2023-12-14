@@ -5,8 +5,8 @@ import com.devapi.model.entities.Role;
 import com.devapi.model.entities.User;
 import com.devapi.model.requestentities.CreateUserRequest;
 import jakarta.transaction.Transactional;
-import org.springframework.stereotype.Component;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -24,7 +24,7 @@ public interface UserService {
     boolean deleteById(UUID userId);
 
     boolean deleteByEmail(String userId) throws Exception;
-    User save(CreateUserRequest createUserRequest) throws IllegalAccessException;
+    User save(CreateUserRequest createUserRequest) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, InstantiationException;
 
     // Method to update only the provided items in the request body using class properties
     User updateUser(String username, UserDTO userDTO) throws Exception;

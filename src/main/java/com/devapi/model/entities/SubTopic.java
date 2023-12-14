@@ -1,5 +1,6 @@
 package com.devapi.model.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,6 +23,7 @@ public class SubTopic {
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "topic_id")
     @ToString.Exclude
+    @JsonIgnore
     @NonNull
     private Topic topic;
 
@@ -33,7 +35,6 @@ public class SubTopic {
     private String description;
 
     @Column(name = "total_cards", nullable = false)
-    @NonNull
     private int totalCards;
 
     @OneToMany(mappedBy = "subTopic", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
@@ -54,6 +55,10 @@ public class SubTopic {
 
     public void addCard(Card card) {
         this.cards.add(card);
+    }
+
+    public boolean hasCard(Card card){
+        return this.cards.contains(card);
     }
 
 }

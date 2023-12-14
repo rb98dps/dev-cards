@@ -6,15 +6,19 @@ import java.util.List;
 
 public class StandardUserResponse extends BasicResponse<User> {
 
-    public StandardUserResponse(String message, int status, long timestamp, List<User> mainObjects) {
-        super(message, status, timestamp, mainObjects);
+    public StandardUserResponse(String message, int status, long timestamp, User mainObject, List<User> mainObjects) {
+        super(message, status, timestamp, mainObject, mainObjects);
     }
 
-    public StandardUserResponse(String message, int status, long timestamp, User mainObject) {
-        super(message, status, timestamp, mainObject);
+    public StandardUserResponse(String message, int status, List<User> mainObjects) {
+        super(message, status, mainObjects);
     }
 
-    public StandardUserResponse(String message, int status, long timestamp) {
-        super(message, status, timestamp);
+    public StandardUserResponse(String message, int status, User mainObject) {
+        super(message, status, mainObject);
+    }
+
+    public StandardUserResponse(String message, int status) {
+        super(message, status);
     }
 }

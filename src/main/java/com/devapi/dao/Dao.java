@@ -66,7 +66,7 @@ public class Dao<S, T> implements GenericDao<S, T> {
 
     public boolean checkEntity(String id, String value) {
         CriteriaQuery<S> criteriaQuery = getCriteriaForSingleAttribute(id, value);
-        return entityManager.createQuery(criteriaQuery).getResultList().size() > 0;
+        return !entityManager.createQuery(criteriaQuery).getResultList().isEmpty();
     }
 
     public List<S> getEntity(String id, String value) {

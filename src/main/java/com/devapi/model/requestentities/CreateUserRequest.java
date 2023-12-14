@@ -1,13 +1,8 @@
 package com.devapi.model.requestentities;
 
-import com.devapi.model.entities.Role;
-import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NonNull;
-import lombok.ToString;
 
-import java.sql.Timestamp;
-import java.util.Collection;
 import java.util.UUID;
 @Data
 public class CreateUserRequest {

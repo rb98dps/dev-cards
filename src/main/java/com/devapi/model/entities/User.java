@@ -5,10 +5,7 @@ import lombok.*;
 import org.hibernate.Hibernate;
 
 import java.sql.Timestamp;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 @Getter
 @Setter
@@ -69,10 +66,19 @@ public class User {
     }
 
     public void addRole(Role role) {
+        if(this.roles==null)
+            initiateRoles();
+
         roles.add(role);
     }
 
+    private void initiateRoles() {
+        this.roles = new ArrayList<>();
+    }
+
     public void addRoles(List<Role> roles) {
+        if(this.roles==null)
+            initiateRoles();
         this.roles.addAll(roles);
     }
 }

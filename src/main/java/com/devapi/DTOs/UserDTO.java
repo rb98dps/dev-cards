@@ -1,12 +1,6 @@
 package com.devapi.DTOs;
 
-import com.devapi.model.entities.Role;
 import lombok.*;
-import org.hibernate.Hibernate;
-
-import java.sql.Timestamp;
-import java.util.Collection;
-import java.util.Objects;
 
 @Getter
 @Setter
