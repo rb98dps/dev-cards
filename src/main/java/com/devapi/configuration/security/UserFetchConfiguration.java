@@ -51,17 +51,17 @@ public class UserFetchConfiguration {
             UserDetails emp = User.builder()
                     .username("user")
                     .password("Admin@123")
-                    .roles("EMPLOYEE")
+                    .authorities("EMPLOYEE")
                     .build();
             UserDetails man = User.builder()
                     .username("manager")
                     .password("Admin@123")
-                    .roles("MANAGER", "EMPLOYEE")
+                    .authorities("MANAGER", "EMPLOYEE")
                     .build();
             UserDetails admin = User.builder()
                     .username("admin")
                     .password("Admin@123")
-                    .roles("EMPLOYEE", "MANAGER", "ADMIN")
+                    .authorities("EMPLOYEE", "MANAGER", "ADMIN")
                     .build();
             return new InMemoryUserDetailsManager(emp, admin, man);
         }
