@@ -1,10 +1,7 @@
 package com.devapi.model.entities;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.io.Serializable;
 import java.util.UUID;
@@ -14,7 +11,18 @@ import java.util.UUID;
 @Entity
 @Table(name = "subtopic_progress")
 @NoArgsConstructor
+@Builder
 public class SubTopicProgress {
+
+    @MapsId("userId")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @MapsId("subTopicId")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subtopic_id")
+    private SubTopic subTopic;
 
     @Embeddable
     @Setter

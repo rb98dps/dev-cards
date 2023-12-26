@@ -31,4 +31,6 @@ public interface UserService {
 
     @Transactional
     void addRolesToUser(User user, List<Role> roles) throws Exception;
+
+    User getDummyUser() throws Exception;
 }

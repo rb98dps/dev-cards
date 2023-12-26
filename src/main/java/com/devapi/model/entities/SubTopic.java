@@ -4,9 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 @Entity
 @Table(name = "subtopic")
@@ -39,6 +37,15 @@ public class SubTopic {
 
     @OneToMany(mappedBy = "subTopic", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Card> cards;
+
+    @ManyToMany(mappedBy = "favouriteSubTopics")
+    private Set<User> users = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "subTopic")
+    private Set<Problem> problems = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "subTopic")
+    private Set<SubTopicProgress> subtopicProgresses = new LinkedHashSet<>();
 
     @Override
     public boolean equals(Object o) {

@@ -121,7 +121,7 @@ public class CardsController {
         }
         //add ratio of the seen and not seen later on
         finalCards = getRandomSubset(finalCards, getCardsRequest.getNoOfCards());
-        return new ResponseEntity<>(new BasicResponse<>("Subtopic Created ", HttpStatus.OK.value(), finalCards), HttpStatus.OK);
+        return new ResponseEntity<>(new BasicResponse<>("Cards ", HttpStatus.OK.value(), finalCards), HttpStatus.OK);
     }
 
     @PostMapping("/update")
@@ -146,7 +146,7 @@ public class CardsController {
                     subTopicProgress.setCompletedCards(optionalSubTopicProgress.get().getCompletedCards() + 1);
 
                 } else {
-                    subTopicProgress = new SubTopicProgress(new SubTopicProgress.SubTopicProgressId(user.getId(), updateCardRequest.getSubTopicId()), 1, false);
+                    subTopicProgress = SubTopicProgress.builder().id(new SubTopicProgress.SubTopicProgressId(user.getId(), updateCardRequest.getSubTopicId())).CompletedCards(1).isCompleted(false).build();
                 }
 
                 Optional<SubTopic> subTopic = subTopicRepository.findById(updateCardRequest.getSubTopicId());
@@ -160,7 +160,7 @@ public class CardsController {
                         topicProgress = optionalTopicProgress.get();
                         topicProgress.setCompletedSubtopics(optionalTopicProgress.get().getCompletedSubtopics() + 1);
                     } else {
-                        topicProgress = new TopicProgress(new TopicProgress.TopicProgressId(user.getId(), updateCardRequest.getTopicId()), 1, false);
+                        topicProgress = TopicProgress.builder().id(new TopicProgress.TopicProgressId(user.getId(), updateCardRequest.getTopicId())).completedSubtopics(1).isCompleted(false).build();
                     }
 
 

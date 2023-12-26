@@ -35,7 +35,7 @@ public class User {
     @NonNull
     private String email;
 
-    @ManyToMany(fetch = FetchType.LAZY,cascade = CascadeType.ALL)
+    @ManyToMany(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
     @JoinTable(
             name = "users_roles",
             joinColumns = @JoinColumn(
@@ -51,6 +51,52 @@ public class User {
 
     @Column(name = "last_login_date")
     Timestamp lastLoginDate;
+
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
+    @JoinTable(
+            name = "favourite_subtopic",
+            joinColumns = @JoinColumn(
+                    name = "user_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(
+                    name = "subtopic_id", referencedColumnName = "id"))
+    @ToString.Exclude
+    private Collection<SubTopic> favouriteSubTopics;
+
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
+    @JoinTable(
+            name = "favourite_topic",
+            joinColumns = @JoinColumn(
+                    name = "user_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(
+                    name = "topic_id", referencedColumnName = "id"))
+    @ToString.Exclude
+    private Collection<Topic> favouriteTopics;
+
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive;
+
+    @OneToMany(mappedBy = "user")
+    @ToString.Exclude
+    private Set<SubTopicProgress> subtopicProgresses = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "user")
+    @ToString.Exclude
+    private Set<TopicProgress> topicProgresses = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "user")
+    @ToString.Exclude
+    private Set<CardsProgress> userHistories = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "user")
+    @ToString.Exclude
+    private Set<UserProblem> userProblems = new LinkedHashSet<>();
+
+    @ManyToMany
+    @JoinTable(name = "user_test",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "test_id"))
+    @ToString.Exclude
+    private Set<Test> tests = new LinkedHashSet<>();
 
     @Override
     public boolean equals(Object o) {
@@ -80,5 +126,38 @@ public class User {
         if(this.roles==null)
             initiateRoles();
         this.roles.addAll(roles);
+    }
+
+    private void initiateFavouriteSubTopic() {
+        this.favouriteSubTopics = new ArrayList<>();
+    }
+
+    public void addFavouriteSubTopics(List<SubTopic> favouriteSubTopics) {
+        if(this.favouriteSubTopics==null)
+            initiateRoles();
+        this.favouriteSubTopics.addAll(favouriteSubTopics);
+    }
+
+    public void addFavouriteSubTopic(SubTopic favouriteSubTopic) {
+        if(this.favouriteSubTopics==null)
+            initiateRoles();
+        this.favouriteSubTopics.add(favouriteSubTopic);
+    }
+
+
+    private void initiateFavouriteTopic() {
+        this.favouriteTopics = new ArrayList<>();
+    }
+
+    public void addFavouriteTopics(List<Topic> favouriteTopics) {
+        if(this.favouriteTopics==null)
+            initiateRoles();
+        this.favouriteTopics.addAll(favouriteTopics);
+    }
+
+    public void addFavouriteTopic(Topic favouriteTopic) {
+        if(this.favouriteTopics==null)
+            initiateRoles();
+        this.favouriteTopics.add(favouriteTopic);
     }
 }

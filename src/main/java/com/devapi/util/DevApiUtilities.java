@@ -1,5 +1,7 @@
 package com.devapi.util;
 
+import org.modelmapper.ModelMapper;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Timestamp;
@@ -31,6 +33,11 @@ public class DevApiUtilities {
             }
         }
         return instance;
+    }
+    private static ModelMapper modelMapper = new ModelMapper();
+
+    public static <T> T mapObjectToObjectWithModelMapper(Object object, Class<T> clazz) {
+        return modelMapper.map(object, clazz);
     }
 
     public static Object mapObjectToObject(Object object, Object object1) throws IllegalAccessException, NoSuchMethodException, InvocationTargetException, InstantiationException {
@@ -66,6 +73,7 @@ public class DevApiUtilities {
         Collections.shuffle(inputList);
         return inputList.subList(inputList.size() - n, inputList.size());
     }
+
 
 
 }

@@ -106,5 +106,14 @@ public class UserServiceImpl extends GenericServiceImpl<User, UUID> implements U
         user.addRoles(roles);
     }
 
+    @Override
+    public User getDummyUser() throws Exception {
+        Optional<User> user = this.findByEmail("dummy@gmail.com");
+        if(user.isPresent()){
+            return user.get();
+        }
+        throw new Exception("Some problem occurred while fetching dummy user");
+    }
+
 
 }
