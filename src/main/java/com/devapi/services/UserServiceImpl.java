@@ -1,6 +1,7 @@
 package com.devapi.services;
 
-import com.devapi.DTOs.UserDTO;
+import com.devapi.model.requestentities.GetUserRequest;
+import com.devapi.responseObjects.UserDTO;
 import com.devapi.dao.Dao;
 import com.devapi.model.entities.Role;
 import com.devapi.model.entities.User;
@@ -58,7 +59,7 @@ public class UserServiceImpl extends GenericServiceImpl<User, UUID> implements U
     @Override
     @Transactional
     public User save(CreateUserRequest createUserRequest) throws IllegalAccessException, NoSuchMethodException, InstantiationException, InvocationTargetException {
-        // user.setPassword(passwordEncoder.encode(user.getPassword()));
+        //user.setPassword(passwordEncoder.encode(user.getPassword()));
         try {
             if (checkExistingUser(createUserRequest.getClass().getDeclaredField("email").getName(), createUserRequest.getEmail()))
                 throw new Exception("User already exist in database");
@@ -70,7 +71,7 @@ public class UserServiceImpl extends GenericServiceImpl<User, UUID> implements U
         user = (User) mapObjectToObject(createUserRequest, User.class);
         user.setCreateTime(new Timestamp(System.currentTimeMillis()));
         user.setLastLoginDate(new Timestamp(System.currentTimeMillis()));
-        System.out.println(user);
+        user.setIsActive(true);
         return this.dao.save(user);
     }
 
@@ -115,5 +116,16 @@ public class UserServiceImpl extends GenericServiceImpl<User, UUID> implements U
         throw new Exception("Some problem occurred while fetching dummy user");
     }
 
+    public User findByEmailOrId(GetUserRequest getUserRequest) throws Exception {
+        User user = null;
+        if (null != getUserRequest.getId()) {
+            user = findById(getUserRequest.getId()).orElse(null);
+        } else if (null != getUserRequest.getEmail()) {
+            user = findByEmail(getUserRequest.getEmail()).orElse(null);
+        } else {
+            throw new Exception("Bad Request, Necessary Fields not found");
+        }
+        return user;
+    }
 
 }

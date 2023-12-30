@@ -1,6 +1,7 @@
 package com.devapi.services;
 
-import com.devapi.DTOs.UserDTO;
+import com.devapi.model.requestentities.GetUserRequest;
+import com.devapi.responseObjects.UserDTO;
 import com.devapi.model.entities.Role;
 import com.devapi.model.entities.User;
 import com.devapi.model.requestentities.CreateUserRequest;
@@ -33,4 +34,6 @@ public interface UserService {
     void addRolesToUser(User user, List<Role> roles) throws Exception;
 
     User getDummyUser() throws Exception;
+
+    public User findByEmailOrId(GetUserRequest getUserRequest) throws Exception;
 }

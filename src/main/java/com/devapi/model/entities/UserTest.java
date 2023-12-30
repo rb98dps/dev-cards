@@ -45,4 +45,7 @@ public class UserTest implements Serializable {
     @Temporal(TemporalType.TIMESTAMP)
     private Date endTime;
 
+    @Column(name = "is_ended")
+    private boolean ended;
+
 }

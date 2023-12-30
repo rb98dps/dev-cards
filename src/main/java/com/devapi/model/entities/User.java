@@ -1,5 +1,6 @@
 package com.devapi.model.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.Hibernate;
@@ -60,6 +61,7 @@ public class User {
             inverseJoinColumns = @JoinColumn(
                     name = "subtopic_id", referencedColumnName = "id"))
     @ToString.Exclude
+    @JsonIgnore
     private Collection<SubTopic> favouriteSubTopics;
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
@@ -70,6 +72,7 @@ public class User {
             inverseJoinColumns = @JoinColumn(
                     name = "topic_id", referencedColumnName = "id"))
     @ToString.Exclude
+    @JsonIgnore
     private Collection<Topic> favouriteTopics;
 
     @Column(name = "is_active", nullable = false)
@@ -77,18 +80,22 @@ public class User {
 
     @OneToMany(mappedBy = "user")
     @ToString.Exclude
+    @JsonIgnore
     private Set<SubTopicProgress> subtopicProgresses = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "user")
     @ToString.Exclude
+    @JsonIgnore
     private Set<TopicProgress> topicProgresses = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "user")
     @ToString.Exclude
+    @JsonIgnore
     private Set<CardsProgress> userHistories = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "user")
     @ToString.Exclude
+    @JsonIgnore
     private Set<UserProblem> userProblems = new LinkedHashSet<>();
 
     @ManyToMany
@@ -96,6 +103,7 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "test_id"))
     @ToString.Exclude
+    @JsonIgnore
     private Set<Test> tests = new LinkedHashSet<>();
 
     @Override

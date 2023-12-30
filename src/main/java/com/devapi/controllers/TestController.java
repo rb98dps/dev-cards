@@ -7,6 +7,7 @@ import com.devapi.model.requestentities.UpdateTestRequest;
 import com.devapi.responseObjects.BasicResponse;
 import com.devapi.responseObjects.ProblemDetailResponse;
 import com.devapi.responseObjects.TestDetailsResponse;
+import com.devapi.responseObjects.UserTestDetailsResponse;
 import com.devapi.services.UserService;
 import com.devapi.util.DevApiUtilities;
 import jakarta.persistence.EntityNotFoundException;
@@ -16,13 +17,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.rest.webmvc.RepositoryRestController;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -120,7 +119,7 @@ public class TestController {
         }
         testRepository.save(test);
         UUID userId = createTestRequest.getUserId();
-        if (null != userId || user.isEmpty()) {
+        if (null == userId || user.isEmpty()) {
             user = Optional.ofNullable(userService.getDummyUser());
         }
         UserTestId userTestId = new UserTestId(userId, test.getId());
@@ -133,7 +132,7 @@ public class TestController {
 
     @PostMapping("update-test")
     @Transactional
-    public ResponseEntity<?> updateTest(@RequestBody @NonNull UpdateTestRequest updateTestRequest) {
+    public ResponseEntity<?> updateTest(@RequestBody @NonNull UpdateTestRequest updateTestRequest) throws Exception {
         UUID testId = updateTestRequest.getTestId();
         UUID userId = updateTestRequest.getUserId();
         UUID problemId = updateTestRequest.getProblemId();
@@ -146,6 +145,13 @@ public class TestController {
 
         UserTest userTest = userTestRepository.findById(UserTestId.builder().userId(userId).testId(testId).build())
                 .orElseThrow(() -> new EntityNotFoundException("Test not found for the user"));
+
+        if(!checkTestStarted(userTest)){
+            throw new Exception("Test not started yet");
+        }
+        if(checkTestEnded(userTest)){
+            throw new Exception("Test already ended");
+        }
         userProblem.setTest(userTest.getTest());
         userProblem.setProblem(problem);
         userProblem.setUser(userTest.getUser());
@@ -174,9 +180,10 @@ public class TestController {
             userTest.setProblemsAttempted(userTest.getProblemsAttempted() + 1);
         }
         userProblemRepository.save(userProblem);
-        if (updateTestRequest.isEndTest()) {
+        if (updateTestRequest.isEndTest() && !userTest.isEnded()) {
             ZonedDateTime zonedDateTime = ZonedDateTime.ofInstant(new Timestamp(System.currentTimeMillis()).toInstant(), ZoneOffset.of("+05:30"));
             userTest.setEndTime(new Date(zonedDateTime.toEpochSecond()));
+            userTest.setEnded(true);
         }
         userTestRepository.save(userTest);
         return new ResponseEntity<>(new BasicResponse<>("Updated Successfully", HttpStatus.OK.value()), HttpStatus.OK);
@@ -207,5 +214,68 @@ public class TestController {
         testDetailsResponse.setTotalProblems(test.getTotalProblems());
 
         return new ResponseEntity<>(new BasicResponse<>("Test Details", HttpStatus.OK.value(),testDetailsResponse), HttpStatus.OK);
+    }
+
+    @PostMapping("start-test")
+    @Transactional
+    public ResponseEntity<?> startTest(@RequestBody @NonNull UpdateTestRequest updateTestRequest) throws Exception {
+        UUID testId = updateTestRequest.getTestId();
+        UUID userId = updateTestRequest.getUserId();
+        UserTest userTest = userTestRepository.findById(UserTestId.builder().userId(userId).testId(testId).build())
+                .orElseThrow(() -> new EntityNotFoundException("Test not found for the user"));
+        if(checkTestStarted(userTest)){
+            throw new Exception("Test already started");
+        }
+        if(checkTestEnded(userTest)){
+            throw new Exception("Test cannot be started as it is already ended");
+        }
+        Timestamp currtimestamp = DevApiUtilities.getCurrentTimeStamp();
+        userTest.setStartTime(currtimestamp);
+        int givenTime = userTest.getGivenTime();
+        Instant instant = currtimestamp.toInstant();
+        Instant sumInstant = instant.plusSeconds(givenTime);
+        userTest.setEndTime(Timestamp.from(sumInstant));
+        userTest.setEnded(false);
+        userTestRepository.save(userTest);
+        return new ResponseEntity<>(new BasicResponse<>("Test Started Successfully", HttpStatus.OK.value()), HttpStatus.OK);
+    }
+
+    @GetMapping("get-user-tests")
+    @Transactional
+    public ResponseEntity<?> getAllTestForUser(@RequestParam @NonNull UUID userId) throws Exception {
+
+        User user = userService.findById(userId).orElseThrow(()-> new EntityNotFoundException("User not found"));
+        List<UserTest> userTests = userTestRepository.findUserTestsByUserAndEndedIsTrue(user);
+        List<UserTestDetailsResponse> userTestDetailsResponses = new ArrayList<>();
+        for(UserTest userTest: userTests){
+            Test test = userTest.getTest();
+            Set<String> topicNames = new HashSet<>();
+            Set<String> subTopicNames = new HashSet<>();
+            for(TestProblem testProblem: test.getTestProblems()){
+                Problem problem = testProblem.getProblem();
+                topicNames.add(problem.getTopic().getName());
+                subTopicNames.add(problem.getSubTopic().getName());
+            }
+            UserTestDetailsResponse userTestDetailsResponse = UserTestDetailsResponse.builder().score(userTest.getScore())
+                    .startTime(userTest.getStartTime()).totalProblems(test.getTotalProblems()).givenTime(userTest.getGivenTime())
+                    .totalScore(test.getTotalScore()).subTopicName(subTopicNames).topicName(topicNames).build();
+            userTestDetailsResponses.add(userTestDetailsResponse);
+        }
+        return new ResponseEntity<>(new BasicResponse<>("Test Started Successfully", HttpStatus.OK.value(),userTestDetailsResponses), HttpStatus.OK);
+    }
+    private boolean checkTestEnded(UserTest userTest) {
+        Timestamp currtimestamp = DevApiUtilities.getCurrentTimeStamp();
+        if(userTest.getEndTime()==null)
+            return false;
+
+        Timestamp testEndtimestamp = Timestamp.from(userTest.getEndTime().toInstant());
+        if(testEndtimestamp.before(currtimestamp)){
+            userTest.setEnded(true);
+        }
+        return userTest.isEnded();
+    }
+
+    private boolean checkTestStarted(UserTest userTest) {
+        return userTest.getStartTime()!=null;
     }
 }

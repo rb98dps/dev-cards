@@ -15,6 +15,7 @@ public class DevApiUtilities {
         
     }
 
+    public static final String TIME_ZONE = "+05:30";
     public static Object mapObjectToObject(Object object, Class<?> clazz) throws IllegalAccessException, NoSuchMethodException, InvocationTargetException, InstantiationException {
         Field[] fields = object.getClass().getDeclaredFields();
         Object instance =  clazz.getDeclaredConstructor().newInstance();
@@ -64,6 +65,19 @@ public class DevApiUtilities {
         ZonedDateTime adjustedDateTime = zonedDateTime.minusDays(days);
 
         return Timestamp.from(adjustedDateTime.toInstant());
+    }
+
+    public static Timestamp subtractDays(int days) {
+        return subtractDays(new Timestamp(System.currentTimeMillis()),days,TIME_ZONE);
+    }
+
+    public static Timestamp getCurrentTimeStamp(Timestamp timestamp, String timeZoneId) {
+        ZonedDateTime zonedDateTime = ZonedDateTime.ofInstant(timestamp.toInstant(), ZoneOffset.of(timeZoneId));
+        return Timestamp.from(zonedDateTime.toInstant());
+    }
+
+    public static Timestamp getCurrentTimeStamp() {
+        return getCurrentTimeStamp(new Timestamp(System.currentTimeMillis()),TIME_ZONE);
     }
 
     public static <T> List<T> getRandomSubset(List<T> inputList, int n) {

@@ -1,6 +1,10 @@
-package com.devapi.DTOs;
+package com.devapi.responseObjects;
 
+import com.devapi.model.entities.Role;
 import lombok.*;
+
+import java.sql.Timestamp;
+import java.util.Collection;
 
 @Getter
 @Setter
@@ -13,11 +17,14 @@ public class UserDTO {
 
     String lastName;
 
-    String password;
-
     @NonNull
     String email;
 
+    private Collection<Role> roles;
+
+    Timestamp createTime;
+
+    Timestamp lastLoginDate;
     @Override
     public int hashCode() {
         return getClass().hashCode();
