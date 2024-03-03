@@ -1,6 +1,8 @@
 package com.devapi.scheduler;
 
 
+import com.devapi.dao.UserProblemRepository;
+import com.devapi.dao.UserTestRepository;
 import com.devapi.services.UserService;
 import com.devapi.util.DevApiUtilities;
 
@@ -22,6 +24,7 @@ public class ScheduledUserTestChecker {
     @Autowired
     private UserProblemRepository userProblemRepository;
 
+    @Autowired
     private UserService userService;
     @Autowired
     public void setUserService(UserService userService) {
